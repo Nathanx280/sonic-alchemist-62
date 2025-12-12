@@ -21,6 +21,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import MergeTimeline from "@/components/MergeTimeline";
 import StemSeparation from "@/components/StemSeparation";
+import StemRecreator from "@/components/StemRecreator";
 
 interface StemLevels {
   vocals: number;
@@ -852,13 +853,24 @@ const RemixMerge = () => {
 
                                   {/* Stem Separation */}
                                   {settings.enableStemProcessing && (
-                                    <StemSeparation
-                                      trackId={track.id}
-                                      trackName={track.name}
-                                      stems={track.stems}
-                                      onStemsChange={updateTrackStems}
-                                      aiRecommended={aiAnalysis?.stemPriority?.find(sp => sp.trackIndex === index) as StemLevels | undefined}
-                                    />
+                                    <div className="space-y-4">
+                                      <StemSeparation
+                                        trackId={track.id}
+                                        trackName={track.name}
+                                        stems={track.stems}
+                                        onStemsChange={updateTrackStems}
+                                        aiRecommended={aiAnalysis?.stemPriority?.find(sp => sp.trackIndex === index) as StemLevels | undefined}
+                                      />
+                                      <StemRecreator
+                                        trackId={track.id}
+                                        trackName={track.name}
+                                        originalBpm={track.bpm}
+                                        originalKey={track.key}
+                                        onRecreationComplete={(stemType, recreation) => {
+                                          toast.success(`Stem recreation ready: ${recreation.variationName}`);
+                                        }}
+                                      />
+                                    </div>
                                   )}
                                 </div>
                               </motion.div>
