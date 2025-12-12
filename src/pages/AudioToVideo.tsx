@@ -35,6 +35,7 @@ interface VisualizerSettings {
   customBackgroundImage: HTMLImageElement | null;
   comicCenterImage: string | null;
   comicCenterImageElement: HTMLImageElement | null;
+  comicImageAnimation: "spin" | "scroll";
   particleIntensity: number;
   glowIntensity: number;
   barStyle: "classic" | "rounded" | "dots" | "blocks" | "circular" | "radial" | "wave" | "comic";
@@ -126,6 +127,7 @@ const defaultSettings: VisualizerSettings = {
   customBackgroundImage: null,
   comicCenterImage: null,
   comicCenterImageElement: null,
+  comicImageAnimation: "scroll",
   particleIntensity: 50,
   glowIntensity: 60,
   barStyle: "classic",
@@ -424,6 +426,7 @@ const AudioToVideo = () => {
             titleOverlay: settings.titleOverlay,
             artistOverlay: settings.artistOverlay,
             comicCenterImage: settings.comicCenterImageElement,
+            comicImageAnimation: settings.comicImageAnimation,
           }, particles);
         },
         (progress) => {
@@ -724,8 +727,36 @@ const AudioToVideo = () => {
                             Upload artwork for center
                           </motion.button>
                         )}
+                        <div className="flex gap-2 mt-2">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => updateSetting("comicImageAnimation", "scroll")}
+                            className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-medium transition-colors ${
+                              settings.comicImageAnimation === "scroll"
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            Scroll
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => updateSetting("comicImageAnimation", "spin")}
+                            className={`flex-1 py-1.5 px-2 rounded-lg text-[10px] font-medium transition-colors ${
+                              settings.comicImageAnimation === "spin"
+                                ? "bg-accent text-accent-foreground"
+                                : "bg-muted/30 text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            Spin
+                          </motion.button>
+                        </div>
                         <p className="text-[10px] text-muted-foreground mt-2">
-                          Your image will scroll inside the comic circle with beat-reactive speed
+                          {settings.comicImageAnimation === "scroll" 
+                            ? "Image scrolls vertically with beat-reactive speed"
+                            : "Image rotates with beat-reactive motion"}
                         </p>
                       </div>
                     )}

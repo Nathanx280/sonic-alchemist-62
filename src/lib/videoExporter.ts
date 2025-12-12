@@ -178,6 +178,7 @@ export const drawVisualizerFrame = (
     titleOverlay?: TextOverlaySettings;
     artistOverlay?: TextOverlaySettings;
     comicCenterImage?: HTMLImageElement | null;
+    comicImageAnimation?: "spin" | "scroll";
   },
   particles: { x: number; y: number; vx: number; vy: number; size: number; color: string; life: number }[]
 ) => {
@@ -331,26 +332,50 @@ export const drawVisualizerFrame = (
     ctx.arc(centerX, centerY, circleRadius, 0, Math.PI * 2);
     ctx.clip();
     
-    // Custom image with smooth rotation
+    // Custom image with animation based on setting
     if (settings.comicCenterImage) {
-      ctx.translate(centerX, centerY);
-      ctx.rotate(rotation);
-      const scale = 1 + bass * 0.1; // Subtle pulse on bass
-      ctx.scale(scale, scale);
-      
       const imgHeight = settings.comicCenterImage.height;
       const imgWidth = settings.comicCenterImage.width;
       const drawScale = Math.max((circleRadius * 3) / imgWidth, (circleRadius * 3) / imgHeight);
       const scaledWidth = imgWidth * drawScale;
       const scaledHeight = imgHeight * drawScale;
       
-      ctx.drawImage(
-        settings.comicCenterImage,
-        -scaledWidth / 2,
-        -scaledHeight / 2,
-        scaledWidth,
-        scaledHeight
-      );
+      if (settings.comicImageAnimation === "spin") {
+        // Spin animation (original behavior)
+        ctx.translate(centerX, centerY);
+        ctx.rotate(rotation);
+        const scale = 1 + bass * 0.1;
+        ctx.scale(scale, scale);
+        
+        ctx.drawImage(
+          settings.comicCenterImage,
+          -scaledWidth / 2,
+          -scaledHeight / 2,
+          scaledWidth,
+          scaledHeight
+        );
+      } else {
+        // Scroll animation (new behavior)
+        const baseSpeed = 80;
+        const bassBoost = bass * 300;
+        const scrollOffset = (time * (baseSpeed + bassBoost)) % scaledHeight;
+        const scale = 1 + bass * 0.05;
+        
+        ctx.translate(centerX, centerY);
+        ctx.scale(scale, scale);
+        
+        // Draw tiled for seamless scrolling
+        const startY = -scrollOffset;
+        for (let y = startY - scaledHeight; y < circleRadius * 2; y += scaledHeight) {
+          ctx.drawImage(
+            settings.comicCenterImage,
+            -scaledWidth / 2,
+            y - circleRadius,
+            scaledWidth,
+            scaledHeight
+          );
+        }
+      }
     } else {
       // Default comic panels with scroll animation
       const baseSpeed = 60;
