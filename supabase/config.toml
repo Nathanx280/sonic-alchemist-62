@@ -1,1 +1,10 @@
 project_id = "awzfepijqwigncatjeaa"
+
+[functions.ai-merge-analysis]
+verify_jwt = false
+
+[functions.generate-remix]
+verify_jwt = false
+
+[functions.recreate-stems]
+verify_jwt = false
