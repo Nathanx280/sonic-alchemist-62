@@ -566,52 +566,65 @@ const RemixMerge = () => {
   }, [tracks, settings]);
 
   const downloadMerged = async () => {
-    if (!mergedAudio) return;
-    
-    const ctx = getAudioContext();
-    const length = mergedAudio.length;
-    const numChannels = mergedAudio.numberOfChannels;
-    
-    const buffer = new ArrayBuffer(44 + length * numChannels * 2);
-    const view = new DataView(buffer);
-    
-    const writeString = (offset: number, string: string) => {
-      for (let i = 0; i < string.length; i++) {
-        view.setUint8(offset + i, string.charCodeAt(i));
-      }
-    };
-    
-    writeString(0, 'RIFF');
-    view.setUint32(4, 36 + length * numChannels * 2, true);
-    writeString(8, 'WAVE');
-    writeString(12, 'fmt ');
-    view.setUint32(16, 16, true);
-    view.setUint16(20, 1, true);
-    view.setUint16(22, numChannels, true);
-    view.setUint32(24, ctx.sampleRate, true);
-    view.setUint32(28, ctx.sampleRate * numChannels * 2, true);
-    view.setUint16(32, numChannels * 2, true);
-    view.setUint16(34, 16, true);
-    writeString(36, 'data');
-    view.setUint32(40, length * numChannels * 2, true);
-    
-    const offset = 44;
-    for (let i = 0; i < length; i++) {
-      for (let ch = 0; ch < numChannels; ch++) {
-        const sample = Math.max(-1, Math.min(1, mergedAudio.getChannelData(ch)[i]));
-        view.setInt16(offset + (i * numChannels + ch) * 2, sample * 0x7FFF, true);
-      }
+    if (!mergedAudio) {
+      toast.error("No merged audio to download");
+      return;
     }
     
-    const blob = new Blob([buffer], { type: 'audio/wav' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `merged-remix-${settings.targetBpm}bpm-${Date.now()}.wav`;
-    a.click();
-    URL.revokeObjectURL(url);
-    
-    toast.success("Merged audio downloaded!");
+    try {
+      const sampleRate = mergedAudio.sampleRate;
+      const length = mergedAudio.length;
+      const numChannels = mergedAudio.numberOfChannels;
+      const dataSize = length * numChannels * 2;
+      
+      const buffer = new ArrayBuffer(44 + dataSize);
+      const view = new DataView(buffer);
+      
+      const writeString = (offset: number, string: string) => {
+        for (let i = 0; i < string.length; i++) {
+          view.setUint8(offset + i, string.charCodeAt(i));
+        }
+      };
+      
+      // WAV header
+      writeString(0, 'RIFF');
+      view.setUint32(4, 36 + dataSize, true);
+      writeString(8, 'WAVE');
+      writeString(12, 'fmt ');
+      view.setUint32(16, 16, true);
+      view.setUint16(20, 1, true);
+      view.setUint16(22, numChannels, true);
+      view.setUint32(24, sampleRate, true);
+      view.setUint32(28, sampleRate * numChannels * 2, true);
+      view.setUint16(32, numChannels * 2, true);
+      view.setUint16(34, 16, true);
+      writeString(36, 'data');
+      view.setUint32(40, dataSize, true);
+      
+      // Write audio data
+      const offset = 44;
+      for (let i = 0; i < length; i++) {
+        for (let ch = 0; ch < numChannels; ch++) {
+          const sample = Math.max(-1, Math.min(1, mergedAudio.getChannelData(ch)[i]));
+          view.setInt16(offset + (i * numChannels + ch) * 2, sample * 0x7FFF, true);
+        }
+      }
+      
+      const blob = new Blob([buffer], { type: 'audio/wav' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `merged-remix-${settings.targetBpm}bpm-${Date.now()}.wav`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast.success("Merged audio downloaded!");
+    } catch (error) {
+      console.error('Download error:', error);
+      toast.error("Failed to download merged audio");
+    }
   };
 
   const formatTime = (seconds: number) => {
